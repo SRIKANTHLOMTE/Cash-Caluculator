@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Currency Change Calculator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .left-panel, .right-panel {
+            padding: 20px;
+        }
+        .left-panel {
+            flex: 2;
+            border-right: 1px solid #eee;
+        }
+        .right-panel {
+            flex: 1;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .denomination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .denomination-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .denomination-img {
+            width: 120px;
+            height: 60px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        .coin-img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        .stock-input {
+            width: 60px;
+            text-align: center;
+        }
+        #calculation-results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .total-line {
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+        .inventory-update {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>Indian Currency Change Calculator</h1>
+            
+            <div class="input-group">
+                <label for="amount-to-pay">Amount to Pay (₹):</label>
+                <input type="number" id="amount-to-pay" min="0" placeholder="Enter amount">
+            </div>
+
+            <button id="calculate-btn">Calculate Change</button>
+            <div id="status-message"></div>
+            
+            <h2>Denomination Inventory</h2>
+            <div class="denomination-grid" id="denomination-grid">
+                <!-- Will be filled dynamically via JavaScript -->
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h2>Change Calculation</h2>
+            <div id="calculation-results">
+                <p>Enter an amount and click "Calculate Change" to see the results.</p>
+            </div>
+            
+            <div class="inventory-update" id="inventory-update">
+                <h3>Inventory After Transaction</h3>
+                <p>The inventory will update after calculating change.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define denominations (in descending order) with real image URLs
+        const denominations = [
+            { value: 2000, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/7/7d/Indian_2000_rupee_note.jpg', label: '₹2000 Note' },
+            { value: 500, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/7/7b/INR_500_2016_series_obverse.jpg', label: '₹500 Note' },
+            { value: 200, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/9/9b/₹200_note.jpg', label: '₹200 Note' },
+            { value: 100, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/4/4c/₹100_note_2018.jpg', label: '₹100 Note' },
+            { value: 50, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/f/f9/₹50_note_2017.jpg', label: '₹50 Note' },
+            { value: 20, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/a/a9/₹20_note_2019.jpg', label: '₹20 Note' },
+            { value: 10, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/8/89/₹10_note_2018.jpg', label: '₹10 Note' },
+            { value: 5, type: 'note', image: 'https://upload.wikimedia.org/wikipedia/en/0/09/₹5_note_2017.jpg', label: '₹5 Note' },
+            { value: 2, type: 'coin', image: 'https://upload.wikimedia.org/wikipedia/en/0/09/Indian_2_INR_Coin_2019.png', label: '₹2 Coin' },
+            { value: 1, type: 'coin', image: 'https://upload.wikimedia.org/wikipedia/en/c/cc/Indian_1_Rupee_coin_2018.jpg', label: '₹1 Coin' },
+        ];
+
+        // Initialize DOM elements
+        const amountInput = document.getElementById('amount-to-pay');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const denominationGrid = document.getElementById('denomination-grid');
+        const calculationResults = document.getElementById('calculation-results');
+        const inventoryUpdate = document.getElementById('inventory-update');
+        const statusMessage = document.getElementById('status-message');
+
+        // Generate denomination inventory UI
+        denominations.forEach(denom => {
+            const denomItem = document.createElement('div');
+            denomItem.className = 'denomination-item';
+            
+            const img = document.createElement('img');
+            img.src = denom.image;
+            img.className = denom.type === 'note' ? 'denomination-img' : 'coin-img';
+            img.alt = denom.label;
+            
+            const label = document.createElement('div');
+            label.textContent = denom.label;
+            
+            const countLabel = document.createElement('label');
+            countLabel.textContent = 'Available:';
+            countLabel.htmlFor = `count-${denom.value}`;
+            
+            const countInput = document.createElement('input');
+            countInput.type = 'number';
+            countInput.id = `count-${denom.value}`;
+            countInput.className = 'stock-input';
+            countInput.min = '0';
+            countInput.value = '10'; // Default inventory
+            
+            denomItem.appendChild(img);
+            denomItem.appendChild(label);
+            denomItem.appendChild(countLabel);
+            denomItem.appendChild(countInput);
+            
+            denominationGrid.appendChild(denomItem);
+        });
+
+        // Calculate change function
+        calculateBtn.addEventListener('click', function() {
+            const amountToPay = parseInt(amountInput.value);
+            
+            // Validate input
+            if (isNaN(amountToPay) || amountToPay <= 0) {
+                statusMessage.textContent = 'Please enter a valid amount.';
+                statusMessage.className = 'error';
+                return;
+            }
+            
+            // Get current inventory
+            const inventory = {};
+            denominations.forEach(denom => {
+                const countInput = document.getElementById(`count-${denom.value}`);
+                inventory[denom.value] = parseInt(countInput.value) || 0;
+            });
+            
+            // Calculate minimum coins/notes needed
+            const result = calculateMinimumChange(amountToPay, inventory);
+            
+            if (result.success) {
+                displayResults(result.change, amountToPay);
+                updateInventory(result.change);
+                statusMessage.textContent = 'Change calculated successfully!';
+                statusMessage.className = 'success';
+            } else {
+                statusMessage.textContent = result.message;
+                statusMessage.className = 'error';
+            }
+        });
+
+        // Calculate minimum coins/notes needed with inventory constraints
+        function calculateMinimumChange(amount, inventory) {
+            let remainingAmount = amount;
+            const change = {};
+            let totalCoins = 0;
+            
+            // Try to use larger denominations first (greedy approach)
+            for (const denom of denominations) {
+                const value = denom.value;
+                const available = inventory[value];
+                
+                if (available > 0) {
+                    // Calculate how many of this denomination we need
+                    const needed = Math.min(Math.floor(remainingAmount / value), available);
+                    
+                    if (needed > 0) {
+                        change[value] = needed;
+                        remainingAmount -= value * needed;
+                        totalCoins += needed;
+                    }
+                }
+            }
+            
+            // Check if we could make exact change
+            if (remainingAmount === 0) {
+                return {
+                    success: true,
+                    change: change,
+                    totalCoins: totalCoins
+                };
+            } else {
+                return {
+                    success: false,
+                    message: `Cannot make exact change. Still short by ₹${remainingAmount}.`
+                };
+            }
+        }
+
+        // Display calculation results
+        function displayResults(change, totalAmount) {
+            let html = '<h3>Change Breakdown</h3>';
+            let totalCoins = 0;
+            let amountGiven = 0;
+            
+            // Add each denomination to the result
+            denominations.forEach(denom => {
+                const count = change[denom.value] || 0;
+                if (count > 0) {
+                    const subtotal = denom.value * count;
+                    amountGiven += subtotal;
+                    totalCoins += count;
+                    
+                    html += `
+                    <div class="result-item">
+                        <span>${denom.label} × ${count}</span>
+                        <span>₹${subtotal}</span>
+                    </div>`;
+                }
+            });
+            
+            // Add total line
+            html += `
+            <div class="total-line">
+                <span>Total (${totalCoins} pieces)</span>
+                <span>₹${amountGiven}</span>
+            </div>`;
+            
+            calculationResults.innerHTML = html;
+        }
+
+        // Update inventory display after calculation
+        function updateInventory(change) {
+            let html = '<h3>Updated Inventory</h3>';
+            
+            denominations.forEach(denom => {
+                const countInput = document.getElementById(`count-${denom.value}`);
+                const previousCount = parseInt(countInput.value) || 0;
+                const used = change[denom.value] || 0;
+                const newCount = previousCount - used;
+                
+                // Update the input value
+                countInput.value = newCount;
+                
+                html += `
+                <div class="result-item">
+                    <span>${denom.label}</span>
+                    <span>${previousCount} - ${used} = ${newCount}</span>
+                </div>`;
+            });
+            
+            inventoryUpdate.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
