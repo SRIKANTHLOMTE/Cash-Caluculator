@@ -1,0 +1,1 @@
+file:///C:/Users/DELL/Downloads/DALL%C2%B7E%202025-03-16%2012.17.45%20-%20A%20high-resolution%20background%20featuring%20a%20collage%20of%20world%20currencies,%20including%20U.S.%20dollars,%20Euros,%20Yen,%20and%20other%20global%20banknotes%20and%20coins.%20The%20no.webp
